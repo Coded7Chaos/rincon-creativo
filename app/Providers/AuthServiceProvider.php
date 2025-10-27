@@ -5,6 +5,7 @@ namespace App\Providers;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Gate;
 use App\Models\User;
+use App\Enums\Role;
 
 class AuthServiceProvider extends ServiceProvider
 {
@@ -22,15 +23,15 @@ class AuthServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Gate::define('is-admin', function (User $user){
-            return $user->role === 'admin';
+            return $user->role === Role::Admin;
         });
         
         Gate::define('is-fulfillment', function (User $user){
-            return $user->role === 'fulfillment';
+            return $user->role === Role::Fulfillment;
         });
 
         Gate::define('is-client', function (User $user){
-            return $user->role === 'client';
+            return $user->role === Role::Client;
         });
     }
 }

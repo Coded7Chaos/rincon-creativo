@@ -1,7 +1,8 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\V1\UserController;
+use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\AuthController;
 
 // Rutas públicas de Autenticación
@@ -23,6 +24,12 @@ Route::middleware('auth:sanctum')->group(function () {
         // GET /api/users
         Route::get('/users', [UserController::class, 'index']);
     });
+
+    Route::middleware('canany:is-admin,is-fulfillment')
+         ->group(function () {
+        
+        Route::get('/orders', [OrderController::class, 'index']);
+        });
 
     // Aquí podrías poner rutas para usuarios normales (rol 'client')
     // ej: GET /api/profile
