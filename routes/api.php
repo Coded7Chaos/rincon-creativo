@@ -1,8 +1,15 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\V1\UserController;
+//use App\Http\Controllers\Api\V1\UserController;
+use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Api\CategoryController;
+use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\AuthController;
+
+
+Route::apiResource('categories', CategoryController::class);
+Route::apiResource('products', ProductController::class);
 
 // Rutas públicas de Autenticación
 Route::post('/register', [AuthController::class, 'register']);
