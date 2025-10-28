@@ -17,6 +17,7 @@ class User extends Authenticatable
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasApiTokens,HasFactory, Notifiable, SoftDeletes;
 
+
     /**
      * The attributes that are mass assignable.
      *
@@ -33,8 +34,14 @@ class User extends Authenticatable
         'city',
         'address',
         'role',
+        'photo_url',
     ];
 
+
+    protected $attributes = [
+         'photo_url' => 'https://www.vecteezy.com/png/24983914-simple-user-default-icon'
+    ];
+    
     /**
      * The attributes that should be hidden for serialization.
      *

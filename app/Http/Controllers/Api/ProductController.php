@@ -8,14 +8,14 @@ use Illuminate\Http\Request;
 
 class ProductController extends Controller
 {
-    // 📍 GET /api/products
+    //GET /api/products
     public function index()
     {
         $products = Product::with('category')->get();
         return response()->json($products);
     }
 
-    // 📍 POST /api/products
+    //POST /api/products
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -31,14 +31,14 @@ class ProductController extends Controller
         return response()->json($product, 201);
     }
 
-    // 📍 GET /api/products/{id}
+    //GET /api/products/{id}
     public function show(Product $product)
     {
         $product->load('category');
         return response()->json($product);
     }
 
-    // 📍 PUT /api/products/{id}
+    //PUT /api/products/{id}
     public function update(Request $request, Product $product)
     {
         $validated = $request->validate([
@@ -54,7 +54,7 @@ class ProductController extends Controller
         return response()->json($product);
     }
 
-    // 📍 DELETE /api/products/{id}
+    //DELETE /api/products/{id}
     public function destroy(Product $product)
     {
         $product->delete();

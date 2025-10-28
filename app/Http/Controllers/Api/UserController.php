@@ -58,6 +58,7 @@ class UserController extends Controller
             'address' => $data['address'],
             'role' => $data['role'],
         ]);
+        
         return response()->json([
             'message' => 'Usuario con rol creado exitosamente',
             'user' => $user

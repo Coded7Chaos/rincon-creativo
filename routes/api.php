@@ -28,6 +28,8 @@ Route::middleware('auth:sanctum')->group(function () {
     
     //Ruta para obtener datos de un perfil en concreto. Lista datos de usuario y las ordenes realizadas 
     Route::get('/profile', [ProfileController::class, 'show']);
+    //Ruta para cambiar los datos de perfil permitidos. Ahora tambien se puede setear la imagen 
+    Route::patch('/profile', [ProfileController::class, 'update']);
     // Ruta de Logout (requiere estar logueado para "desloguearse")
     Route::post('/logout', [AuthController::class, 'logout']);
 
