@@ -2,38 +2,59 @@
 
 namespace Database\Factories;
 
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use App\Enums\Role;
+use App\Enums\Departamento;
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\User>
  */
 class UserFactory extends Factory
 {
-    /**
-     * The current password being used by the factory.
-     */
-    protected static ?string $password;
+    protected $model = User::class;
 
     /**
-     * Define the model's default state.
+     * Define el estado por defecto del modelo User.
      *
      * @return array<string, mixed>
      */
     public function definition(): array
     {
+        // Lista de departamentos (puedes ajustarla a los valores de tu enum Departamento)
+        $departamentos = [
+            Departamento::LaPaz,
+            Departamento::Cochabamba,
+            Departamento::SantaCruz,
+        ];
+
+        // Lista de roles básicos
+        $roles = [
+            Role::Client,
+            Role::Fulfillment,
+            Role::Admin,
+        ];
+
         return [
-            'name' => fake()->name(),
-            'email' => fake()->unique()->safeEmail(),
+            'first_name'    => fake()->firstName(),
+            'f_last_name'   => fake()->lastName(),
+            's_last_name'   => fake()->lastName(),
+            'email'         => fake()->unique()->safeEmail(),
+            'password'      => Hash::make('password123'), // contraseña por defecto
+            'phone'         => fake()->numerify('6#######'),
+            'departamento'  => fake()->randomElement($departamentos),
+            'city'          => fake()->city(),
+            'address'       => fake()->streetAddress(),
+            'role'          => fake()->randomElement($roles),
             'email_verified_at' => now(),
-            'password' => static::$password ??= Hash::make('password'),
-            'remember_token' => Str::random(10),
+            'remember_token'    => Str::random(10),
         ];
     }
 
     /**
-     * Indicate that the model's email address should be unverified.
+     * Estado para usuarios no verificados.
      */
     public function unverified(): static
     {

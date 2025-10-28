@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use App\Models\OrderDetail;
 
-class order extends Model
+class Order extends Model
 {
     /** @use HasFactory<\Database\Factories\OrderFactory> */
     use HasFactory;
@@ -31,6 +31,7 @@ class order extends Model
     {
         return $this->belongsTo(User::class);
     }
+        
     public function details(): HasMany
     {
         return $this->hasMany(OrderDetail::class);

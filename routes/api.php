@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\TestController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\ProfileController;
 
 // Rutas públicas de Autenticación
 Route::post('/register', [AuthController::class, 'register']);
@@ -18,6 +19,8 @@ Route::post('/orders/payment-webhook', [OrderController::class, 'handlePaymentSu
 // Rutas protegidas (requieren un token válido) y tener el rol de client
 Route::middleware('auth:sanctum')->group(function () {
     
+    //Ruta para obtener datos de un perfil en concreto. Lista datos de usuario y las ordenes realizadas 
+    Route::get('/profile', [ProfileController::class, 'show']);
     // Ruta de Logout (requiere estar logueado para "desloguearse")
     Route::post('/logout', [AuthController::class, 'logout']);
 
@@ -39,16 +42,11 @@ Route::middleware('auth:sanctum')->group(function () {
 
     });
 
-    Route::middleware('canany:is-admin,is-fulfillment')
+    Route::middleware('can:is-admin,is-fulfillment')
          ->group(function () {
         
         Route::get('/orders', [OrderController::class, 'index']);
         });
 
-    // Aquí podrías poner rutas para usuarios normales (rol 'client')
-    // ej: GET /api/profile
-    Route::get('/profile', function(Request $request) {
-        return $request->user();
-    });
 
 });

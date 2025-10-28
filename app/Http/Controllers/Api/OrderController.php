@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Api;
 
 use App\Models\Order;
 use App\Models\OrderDetail;
@@ -115,8 +115,12 @@ class OrderController extends Controller
      */
     public function index()
     {
-        $orders =  Order::all();
+        $orders = Order::with([
+            'user',
+            'details.product',
+        ])->get();
 
+        // Devolvemos una colección de OrderResource
         return OrderResource::collection($orders);
     }
 

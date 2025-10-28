@@ -1,19 +1,23 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Api;
 
 use App\Http\Requests\ProfileUpdateRequest;
-use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Redirect;
-use Inertia\Inertia;
-use Inertia\Response;
+use App\Http\Resources\UserDataResource;
 
 class ProfileController extends Controller
 {
+
+    public function show(Request $request){
+        $user = $request->user()->load([
+            'orders.details.product',
+        ]);
+
+        return new UserDataResource($user);
+    }
     /**
      * Display the user's profile form.
      */
