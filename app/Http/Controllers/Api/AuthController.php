@@ -3,12 +3,15 @@
 namespace App\Http\Controllers\Api;
 
 use App\Enums\Role;
+use App\Enums\Departamento;
 use App\Models\User;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
+use Illuminate\Validation\Rules\Enum;
+
 
 class AuthController extends Controller
 {
@@ -24,6 +27,13 @@ class AuthController extends Controller
             's_last_name' => 'required|string|max:255',
             'email' => 'required|string|lowercase|email|max:255|unique:'.User::class,
             'password' => ['required', 'confirmed', Password::defaults()],
+            'phone' => ['required',
+                        'string',
+                        'digits:8',
+                        'regex:/^[67]\d{7}$/'],
+            'departamento' => ['required', new Enum(Departamento::class)],
+            'city' => 'required|string|max:255',
+            'address' => 'required|string|max:350|min:10',
         ]);
 
         // 2. Crear el usuario
@@ -33,6 +43,10 @@ class AuthController extends Controller
             's_last_name' => $data['s_last_name'],
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
+            'phone' => $data['phone'],
+            'departamento' => $data['departamento'],
+            'city' => $data['city'],
+            'address' => $data['address'],
         ]);
 
         // 3. Crear el token

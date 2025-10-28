@@ -6,13 +6,16 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Notifications\Notifiable;
 use App\Enums\Role;
+use App\Enums\Departamento;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasApiTokens,HasFactory, Notifiable;
+    use HasApiTokens,HasFactory, Notifiable, SoftDeletes;
 
     /**
      * The attributes that are mass assignable.
@@ -25,6 +28,10 @@ class User extends Authenticatable
         's_last_name',
         'email',
         'password',
+        'phone',
+        'departamento',
+        'city',
+        'address',
         'role',
     ];
 
@@ -49,7 +56,12 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'role' => Role::class,
+            'departamento' => Departamento::class,
         ];
+    }
+    public function orders(): HasMany
+    {
+    return $this->hasMany(Order::class);
     }
 
 }

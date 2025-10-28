@@ -2,6 +2,9 @@
 
 return [
 
+    'binance_api_key' => env('BINANCE_API_KEY'),
+    'binance_api_url' => env('BINANCE_API_URL', 'https://api.binance.com'),
+
     /*
     |--------------------------------------------------------------------------
     | Application Name

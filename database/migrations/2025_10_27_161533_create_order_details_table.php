@@ -20,8 +20,8 @@ return new class extends Migration
                   ->constrained('products')
                   ->onDelete('restrict');
             $table->unsignedInteger('quantity');
-            $table->unsignedDecimal('subtotal_price', 10, 2);
-            $table->unsignedInteger('unit_discount', 10, 2)->default(0);
+            $table->decimal('subtotal_price', 10, 2)->unsigned();
+            $table->unsignedTinyInteger('unit_discount')->default(0);
             //$table->timestamps();
         });
     }

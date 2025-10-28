@@ -11,14 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('orders', function (Blueprint $table) {
+        Schema::create('pruebas', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')
-                  ->constrained('users')
-                  ->onDelete('restrict');
-            $table->decimal('total_amount', 10, 2)->unsigned();
-            $table->string('state')->default('pending');
-            $table->unsignedTinyInteger('global_discount')->default(0);
             $table->timestamps();
         });
     }
@@ -28,6 +22,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('orders');
+        Schema::dropIfExists('pruebas');
     }
 };
