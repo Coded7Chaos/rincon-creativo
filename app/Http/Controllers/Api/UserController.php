@@ -80,7 +80,7 @@ class UserController extends Controller
     public function updateRole (Request $request, string $id)
     {
         $request->validate([
-            'role' => ['required', new Enum(UserRole::class)],
+            'role' => ['required', new Enum(Role::class)],
         ]);
 
         $user = User::find($id);

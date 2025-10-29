@@ -52,6 +52,9 @@ Route::middleware('auth:sanctum')->group(function () {
         //GET /api/orders
         Route::get('/orders', [OrderController::class, 'index']);
 
+        //DELETE /api/users
+        Route::delete('/users/{id}', [UserController::class, 'destroy']);
+
     });
 
     Route::middleware('can:is-admin,is-fulfillment')
