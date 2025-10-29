@@ -32,9 +32,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update']);
     // Ruta de Logout (requiere estar logueado para "desloguearse")
     Route::post('/logout', [AuthController::class, 'logout']);
-
+    
     //Ruta para crear ordenes, se necesita estar loggeado
-    Route::post('/orders/initiate-payment',[OrderController::class, 'initiatePayment']);
+    Route::post('/orders',[OrderController::class, 'store']);
+    Route::get('/orders/{id}', [OrderController::class, 'show']);
 
     // Grupo de rutas solo para admins
     Route::middleware('can:is-admin')

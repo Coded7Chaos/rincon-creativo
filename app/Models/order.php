@@ -19,12 +19,15 @@ class Order extends Model
         'total_amount',
         'state',
         'global_discount',
+        'asset',
+        'paid_at',
     ];
 
     protected $casts = [
         'total_amount' => 'decimal:2', 
         'global_discount' => 'integer',
         'state' => OrderState::class,
+        'paid_at' => 'datetime',
     ];
 
     public function user(): BelongsTo
@@ -36,4 +39,13 @@ class Order extends Model
     {
         return $this->hasMany(OrderDetail::class);
     }
+
+    public function markAsPaid(int $binanceTimestampMs = null): void
+    {
+        $this->state = OrderState::Pending;
+        $this->paid_at = $binanceTimestampMs ? now()->setTimestampMs($binanceTimestampMs) : now();
+
+        $this->save();
+    }
+
 }

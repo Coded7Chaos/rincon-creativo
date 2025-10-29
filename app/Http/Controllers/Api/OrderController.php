@@ -1,174 +1,95 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Http\Controllers;
 
-use App\Models\Order;
-use App\Models\OrderDetail;
-use App\Models\Product;
-use App\Enums\OrderState;
-use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Http;
-use App\Http\Resources\OrderResource;
-
+use App\Services\OrderService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Validation\ValidationException;
 
 class OrderController extends Controller
 {
+    public function __construct(
+        protected OrderService $orderService
+    ) {}
 
     /**
-     * MÉTODO 1: Iniciar el proceso de pago.
-     * El frontend envía el carrito aquí.
-     * Este método NO guarda en BD, solo habla con Binance.
+     * POST /api/orders
+     * El front manda:
+     * {
+     *   "user_id": 123,
+     *   "asset": "USDT",
+     *   "items": [
+     *      { "product_id": 10, "quantity": 2, "unit_price": 4.50, "unit_discount": 0 },
+     *      { "product_id": 12, "quantity": 1, "unit_price": 6.00 }
+     *   ]
+     * }
+     *
+     * Respuesta: order creada en estado UNPAID con total_amount calculado.
      */
-    public function initiatePayment(Request $request)
+    public function store(Request $request): JsonResponse
     {
-        // 1. Validar el carrito
-        $cartData = $request->validate([
-            'products' => 'required|array',
-            'products.*.product_id' => 'required|integer|exists:products,id',
-            'products.*.quantity' => 'required|integer|min:1',
-            'products.*.discount' => 'nullable|integer|min:0|max:100', // El descuento que ofreces
-        ]);
-
-        $totalAmount = 0;
-        $productsForBinance = []; // Datos para enviar a Binance
-
-        // 2. Calcular el total REAL en el backend (NUNCA confíes en el frontend)
-        foreach ($cartData['products'] as $item) {
-            $product = Product::find($item['product_id']);
-            $unit_discount = $item['discount'] ?? 0;
-            
-            // Calculamos el precio con descuento
-            $priceWithDiscount = $product->price - ($product->price * $unit_discount / 100);
-            
-            // Calculamos el subtotal de este item
-            $subtotal = $priceWithDiscount * $item['quantity'];
-            $totalAmount += $subtotal;
-        }
-        // $binanceResponse = Http::post('https://api.binance.com/pay/...', [
-        //     'total_amount' => $totalAmount,
-        //     'currency' => 'USDT',
-        //     'description' => 'Pago de Orden #' . uniqid(),
-        //     'merchant_order_id' => 'MY_INTERNAL_ID_123', // Un ID tuyo
-        //     'cart_data' => $cartData['products'] // (Opcional) Guardar el carrito
-        // ]);
-        // $paymentUrl = $binanceResponse->json()['payment_url'];
-
-        // 4. Devuelves la URL de pago al frontend
-        return response()->json([
-            'message' => 'Solicitud de pago creada.',
-            'payment_url' => 'https://url.de.binance.para.pagar.com/...' // URL real de Binance
-        ]);
-    }
-
-    /**
-     * MÉTODO 2: Webhook de Binance Pay
-     * Binance llama a esta ruta DESPUÉS de que el usuario pague.
-     * Aquí es donde SÍ guardamos en la base de datos.
-     */
-    public function handlePaymentSuccess(Request $request)
-    {
-        $userId = $request->input('user_id'); // ID del usuario
-        $totalPagado = $request->input('total_paid'); // Total que Binance dice que pagó
-        $order = null;
-        try{
-            DB::beginTransaction();
-            //Creacion de la orden principal
-            $order = Order::create([
-                'user_id' => $userId,
-                'total_amount' => $totalPagado,
-                //'state' => OrderState::Pending,
-                'global_discount' => 0,
+        try {
+            $data = $request->validate([
+                'user_id' => 'required|integer|exists:users,id',
+                'asset'   => 'required|string|max:16',
+                'items'   => 'required|array|min:1',
+                'items.*.product_id'     => 'required|integer|exists:products,id',
+                'items.*.quantity'       => 'required|integer|min:1',
+                'items.*.unit_price'     => 'required|numeric|min:0',
+                'items.*.unit_discount'  => 'nullable|integer|min:0',
             ]);
-            foreach ($cartData['products'] as $item) {
-                $product = Product::find($item['product_id']);
-                $unit_discount = $item['discount'] ?? 0;
-                $priceWithDiscount = $product->price - ($product->price * $unit_discount / 100);
-                $subtotalPrice = $priceWithDiscount * $item['quantity'];
-                OrderDetail::create([
-                    'order_id' => $order->id,
-                    'product_id' => $product->id,
-                    'quantity' => $item['quantity'],
-                    'subtotal_price' => $subtotalPrice,
-                    'unit_discount' => $unit_discount,
-                ]);
-
-                // (Aquí también deberías descontar el stock del producto)
-                // $product->decrement('stock', $item['quantity']);
-            }
-            DB::commit();
-
-            return response() -> json(['message' => 'Orden procesada exitosamente.'],200);
-
-        } catch(\Exception $e){
-            DB::rollBack();
-            \Log::error('Error al procesar la orden: ' . $e->getMessage());
-            return response() -> json(['message' => 'Error interno al procesar la orden.'], 500);
+        } catch (ValidationException $e) {
+            return response()->json([
+                'message' => 'Datos inválidos',
+                'errors'  => $e->errors(),
+            ], 422);
         }
-    }
 
-    
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
-    {
-        $orders = Order::with([
-            'user',
-            'details.product',
-        ])->get();
+        $order = $this->orderService->createUnpaidOrder($data);
 
-        // Devolvemos una colección de OrderResource
-        return OrderResource::collection($orders);
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
+        // Esta info se la muestras al usuario para que pague en Binance.
+        // Ej: tu "cuenta destino", memo/tag que debe usar, etc.
+        return response()->json([
+            'order_id'      => $order->id,
+            'state'         => $order->state,
+            'total_amount'  => $order->total_amount,
+            'asset'         => $order->asset,
+            'payment_instructions' => [
+                'type' => 'binance-transfer',
+                // define esto en tu .env
+                'binance_receiver' => env('BINANCE_RECEIVER_INFO', 'TU-CUENTA-BINANCE'),
+                'note' => 'Debes enviar exactamente este monto en esta misma moneda',
+            ],
+        ], 201);
     }
 
     /**
-     * Store a newly created resource in storage.
+     * GET /api/orders/{id}
+     * El front puede preguntar estado actual de la orden.
      */
-    public function store(Request $request)
+    public function show($id): JsonResponse
     {
-        //
-    }
+        $order = $this->orderService->getOrderById($id);
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(order $order)
-    {
-        //
-    }
+        if (!$order) {
+            return response()->json(['message' => 'Orden no encontrada'], 404);
+        }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(order $order)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, order $order)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(order $order)
-    {
-        //
+        return response()->json([
+            'order_id'      => $order->id,
+            'state'         => $order->state,
+            'total_amount'  => $order->total_amount,
+            'asset'         => $order->asset,
+            'paid_at'       => $order->paid_at,
+            'details'       => $order->details->map(function ($d) {
+                return [
+                    'product_id'     => $d->product_id,
+                    'quantity'       => $d->quantity,
+                    'subtotal_price' => $d->subtotal_price,
+                    'unit_discount'  => $d->unit_discount,
+                ];
+            }),
+        ]);
     }
 }

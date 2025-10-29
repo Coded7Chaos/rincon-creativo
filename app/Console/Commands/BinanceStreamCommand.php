@@ -4,40 +4,39 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
+
 use App\Services\BinanceService;
+use App\Services\OrderService;
+
 use React\EventLoop\Factory;
 use React\EventLoop\LoopInterface;
 use function Ratchet\Client\connect;
 
 class BinanceStreamCommand extends Command
 {
-    /**
-     * Nombre del comando
-     */
     protected $signature = 'binance:stream';
 
-    /**
-     * Descripción
-     */
     protected $description = 'Conecta al User Data Stream de Binance y escucha eventos en tiempo real. Ademas, reconecta automaticamente si la conexion se pierde';
 
     protected BinanceService $binanceService;
+    protected OrderService $orderService;
     protected LoopInterface $loop;
     protected int $reconnectDelay = 1;
 
-    public function __construct(BinanceService $binanceService)
-    {
+    public function __construct(
+        BinanceService $binanceService,
+        OrderService $orderService
+    ) {
         parent::__construct();
 
         $this->binanceService = $binanceService;
+        $this->orderService   = $orderService;
     }
 
     public function handle()
     {
         $this->loop = Factory::create();
         $this->connectToBinance();
-
-        // Mantener el proceso corriendo indefinidamente
         $this->loop->run();
     }
 
@@ -60,7 +59,7 @@ class BinanceStreamCommand extends Command
         $this->info("Conectando a WebSocket: {$wsUrl}");
         Log::info("Conectando a WebSocket Binance con listenKey {$listenKey}");
 
-        // Timer para mantener viva la listenKey cada 30 minutos
+        // Renueva listenKey periódicamente
         $this->loop->addPeriodicTimer(30 * 60, function () {
             $ok = $this->binanceService->keepAlive();
             if (!$ok) {
@@ -79,15 +78,21 @@ class BinanceStreamCommand extends Command
                 $conn->on('message', function ($msg) {
                     $data = json_decode($msg, true);
 
-                    if (isset($data['e'])) {
-                        $event = $data['e'];
-                        Log::info("Evento recibido: {$event}", $data);
+                    if (!is_array($data)) {
+                        Log::debug('Mensaje no JSON decodificable');
+                        return;
+                    }
 
-                        if ($event === 'balanceUpdate') {
-                            Log::info('Balance actualizado', $data);
-                        }
-                    } else {
-                        Log::debug('Mensaje recibido sin campo "e"', $data ?? []);
+                    if (!isset($data['e'])) {
+                        Log::debug('Mensaje sin campo "e"', $data);
+                        return;
+                    }
+
+                    $eventType = $data['e'];
+                    Log::info("Evento recibido: {$eventType}", $data);
+
+                    if ($eventType === 'balanceUpdate') {
+                        $this->handleBalanceUpdate($data);
                     }
                 });
 
@@ -102,9 +107,54 @@ class BinanceStreamCommand extends Command
             }
         );
     }
+
+    protected function handleBalanceUpdate(array $payload): void
+    {
+        // Ejemplo payload balanceUpdate esperado de Binance Spot:
+        // {
+        //   "e": "balanceUpdate",
+        //   "E": 1730123123123,
+        //   "a": "USDT",
+        //   "d": "15.00000000",
+        //   "T": 1730123123000
+        // }
+
+        $asset = $payload['a'] ?? null;
+        $deltaStr = $payload['d'] ?? null;
+        $timestampMs = $payload['T'] ?? null;
+
+        if ($asset === null || $deltaStr === null || $timestampMs === null) {
+            Log::warning('[BinanceWS] balanceUpdate incompleto', $payload);
+            return;
+        }
+
+        $delta = (float)$deltaStr;
+
+        // sólo nos interesan depósitos (d > 0)
+        if ($delta <= 0) {
+            Log::info("[BinanceWS] balanceUpdate ignorado porque d <= 0 ({$delta})");
+            return;
+        }
+
+        Log::info("[BinanceWS] Deposito detectado: +{$delta} {$asset}");
+
+        // Intentar casar con una orden UNPAID
+        $matchedOrder = $this->orderService->matchIncomingDeposit(
+            $delta,
+            $asset,
+            (int)$timestampMs
+        );
+
+        if ($matchedOrder) {
+            Log::info("[BinanceWS] Orden {$matchedOrder->id} marcada como PAGADA automáticamente.");
+        } else {
+            Log::info("[BinanceWS] No se pudo casar el pago con ninguna orden pendiente.");
+        }
+    }
+
     protected function scheduleReconnect(int $delay = null)
     {
-        $delay = $delay ?? min($this->reconnectDelay, 60); // límite de 60s
+        $delay = $delay ?? min($this->reconnectDelay, 60);
         Log::info("Reintentando conexión en {$delay} segundos...");
 
         $this->loop->addTimer($delay, function () {
