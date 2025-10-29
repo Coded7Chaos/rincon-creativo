@@ -36,6 +36,7 @@ class AuthController extends Controller
             'address' => 'required|string|max:350|min:10',
         ]);
 
+        try{
         // 2. Crear el usuario
         $user = User::create([
             'first_name' => $data['first_name'],
@@ -59,6 +60,12 @@ class AuthController extends Controller
             'token_type' => 'Bearer',
             'user' => $user
         ], 201); // 201 = Created
+        } catch(\Exception $e){
+            Log::error('Error en el registro de usuario: ' . $e->getMessage());
+            return response()->json([
+            'message' => 'Ocurrió un error inesperado al registrar el usuario.'
+        ], 500);
+        }
     }
 
     /**
