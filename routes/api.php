@@ -42,6 +42,9 @@ Route::middleware('auth:sanctum')->group(function () {
         
         // GET /api/users
         Route::get('/users', [UserController::class, 'index']);
+        
+        // PATCH /api/users  cambia el rol de un usuario
+        Route::patch('/users/{id}/role', [UserController::class, 'updateRole']);
 
         //POST /api/users
         Route::post('/users', [UserController::class, 'store']);

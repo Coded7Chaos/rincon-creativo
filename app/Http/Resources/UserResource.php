@@ -26,6 +26,7 @@ class UserResource extends JsonResource
             'address' => $this->address,
             'photo_url' => $this->photo_url,
             'registrado_el' => $this->created_at->format('d-m-Y'),
+            
         ];
     }
 }

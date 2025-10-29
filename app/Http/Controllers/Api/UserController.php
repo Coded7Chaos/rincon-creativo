@@ -58,7 +58,7 @@ class UserController extends Controller
             'address' => $data['address'],
             'role' => $data['role'],
         ]);
-        
+
         return response()->json([
             'message' => 'Usuario con rol creado exitosamente',
             'user' => $user
@@ -77,9 +77,26 @@ class UserController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function updateRole (Request $request, string $id)
     {
-        //
+        $request->validate([
+            'role' => ['required', new Enum(UserRole::class)],
+        ]);
+
+        $user = User::find($id);
+
+        if (!$user) {
+            return response()->json(['message' => 'Usuario no encontrado'], 404);
+        }
+
+        $user->role = $request->input('role');
+        
+        $user->save();
+
+        return response()->json([
+            'message' => 'Rol de usuario actualizado exitosamente',
+            'user' => $user
+        ], 200);
     }
 
     /**

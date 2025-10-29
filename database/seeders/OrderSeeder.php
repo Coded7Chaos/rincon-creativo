@@ -33,7 +33,7 @@ class OrderSeeder extends Seeder
                 'user_id'         => $client->id,
                 'total_amount'    => 120.50,
                 'state'           => OrderState::Delivered, 
-                'global_discount' => 10, // 10%
+                'global_discount' => 10,
                 'created_at'      => Carbon::now()->subDays(5),
                 'updated_at'      => Carbon::now()->subDays(5),
             ]);
@@ -42,10 +42,40 @@ class OrderSeeder extends Seeder
             $order2 = Order::create([
                 'user_id'         => $client->id,
                 'total_amount'    => 75.00,
-                'state'           => OrderState::Pending, // por ejemplo
+                'state'           => OrderState::Pending,
                 'global_discount' => 0,
                 'created_at'      => Carbon::now()->subDays(2),
                 'updated_at'      => Carbon::now()->subDays(2),
+            ]);
+
+            // Orden 3
+            $order3 = Order::create([
+                'user_id'         => $client->id,
+                'total_amount'    => 154.00,
+                'state'           => OrderState::Delivered,
+                'global_discount' => 0,
+                'created_at'      => Carbon::now()->subDays(4),
+                'updated_at'      => Carbon::now()->subDays(4),
+            ]);
+
+            // Orden 4
+            $order4 = Order::create([
+                'user_id'         => $client->id,
+                'total_amount'    => 220.00,
+                'state'           => OrderState::Pending,
+                'global_discount' => 0,
+                'created_at'      => Carbon::now()->subDays(3),
+                'updated_at'      => Carbon::now()->subDays(3),
+            ]);
+
+            // Orden 5
+            $order5 = Order::create([
+                'user_id'         => $client->id,
+                'total_amount'    => 32.00,
+                'state'           => OrderState::Delivered,
+                'global_discount' => 0,
+                'created_at'      => Carbon::now()->subDays(7),
+                'updated_at'      => Carbon::now()->subDays(7),
             ]);
 
             // Guardamos ids para que OrderDetailSeeder pueda usarlos si quisieras hacer lógica cruzada.
