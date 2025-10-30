@@ -8,6 +8,10 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\ValidationException;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Log;
+use App\Models\Order;
+use App\Http\Resources\OrderResource;
+use App\Http\Resources\OrderDetailResource;
+use App\Enums\OrderState;
 
 class OrderController extends Controller
 {
@@ -18,7 +22,7 @@ class OrderController extends Controller
         $perPage = max(1, min($perPage, 100));
 
         $orders = Order::with(['details.product', 'user'])
-            ->where('state', '!=', OrderState::Unpaid)
+            ->nonUnpaid()
             ->orderByDesc('created_at')
             ->paginate($perPage);
 

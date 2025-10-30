@@ -57,5 +57,10 @@ class Order extends Model
         $this->save();
     }
 
+    public function scopeNonUnpaid($query)
+    {
+        return $query->where('state', '!=', OrderState::Unpaid);
+    }
+
 
 }

@@ -51,9 +51,6 @@ Route::middleware('auth:sanctum')->group(function () {
         //POST /api/users
         Route::post('/users', [UserController::class, 'store']);
 
-        //GET /api/orders, lista todas las ordenes (excepto las no pagadas)
-        Route::get('/orders', [OrderController::class, 'indexNonUnpaid']);
-
         //DELETE /api/users
         Route::delete('/users/{id}', [UserController::class, 'destroy']);
 
@@ -61,8 +58,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::middleware('can:is-admin,is-fulfillment')
          ->group(function () {
-        
-        Route::get('/orders', [OrderController::class, 'index']);
+        //GET /api/orders, lista todas las ordenes (excepto las no pagadas)
+        Route::get('/orders', [OrderController::class, 'indexNonUnpaid']);
         });
 
 
