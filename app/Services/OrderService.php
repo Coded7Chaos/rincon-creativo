@@ -16,7 +16,6 @@ class OrderService
         // payload esperado:
         // [
         //   'user_id' => int,
-        //   'asset' => 'USDT',
         //   'items' => [
         //      [
         //        'product_id' => 12,
@@ -39,6 +38,7 @@ class OrderService
                 'total_amount'    => 0,
                 'asset'           => 'USDT',
                 'paid_at'         => null,
+                'expected_usdt_amount' => $payload['expected_usdt_amount'],
             ]);
 
             // 2. Insertamos cada detalle
@@ -63,6 +63,12 @@ class OrderService
 
             // 3. Actualizamos el total real en la orden
             $order->total_amount = $total;
+
+            $cambio = (float) 13.0;
+            $usdtAmount = round($total/$cambio,6);
+
+            //4. Actualizamos el monto de usdt esperado
+//            $order->expected_usdt_amount = $usdtAmount;
             $order->save();
 
             return $order;
@@ -90,7 +96,7 @@ class OrderService
 
         $match = $candidates->first(function (Order $o) use ($deltaAmount) {
             return $this->amountsAreEqual(
-                (float)$o->total_amount,
+                (float)$o->expected_usdt_amount,
                 $deltaAmount
             );
         });
@@ -114,7 +120,7 @@ class OrderService
      */
     protected function amountsAreEqual(float $a, float $b): bool
     {
-        return round($a, 2) === round($b, 2);
+        return round($a, 6) === round($b, 6);
     }
 
     /**

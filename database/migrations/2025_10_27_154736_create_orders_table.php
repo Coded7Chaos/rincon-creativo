@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('user_id')
                   ->constrained('users')
                   ->onDelete('restrict');
-            $table->decimal('total_amount', 10, 2)->unsigned();
+            $table->decimal('total_amount', 16, 6)->unsigned();
             $table->string('state')->default('pending');
             $table->unsignedTinyInteger('global_discount')->default(0);
             $table->timestamps();

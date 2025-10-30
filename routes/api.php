@@ -33,8 +33,9 @@ Route::middleware('auth:sanctum')->group(function () {
     // Ruta de Logout (requiere estar logueado para "desloguearse")
     Route::post('/logout', [AuthController::class, 'logout']);
     
-    //Ruta para crear ordenes, se necesita estar loggeado
+    //Ruta para crear ordenes unpaid, se necesita estar loggead
     Route::post('/orders',[OrderController::class, 'store']);
+    //Ruta para ver una orden segun su id
     Route::get('/orders/{id}', [OrderController::class, 'show']);
 
     // Grupo de rutas solo para admins
@@ -50,8 +51,8 @@ Route::middleware('auth:sanctum')->group(function () {
         //POST /api/users
         Route::post('/users', [UserController::class, 'store']);
 
-        //GET /api/orders
-        Route::get('/orders', [OrderController::class, 'index']);
+        //GET /api/orders, lista todas las ordenes (excepto las no pagadas)
+        Route::get('/orders', [OrderController::class, 'indexNonUnpaid']);
 
         //DELETE /api/users
         Route::delete('/users/{id}', [UserController::class, 'destroy']);

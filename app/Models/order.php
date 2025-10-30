@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use App\Models\OrderDetail;
+use Carbon\Carbon;
 
 class Order extends Model
 {
@@ -21,13 +22,15 @@ class Order extends Model
         'global_discount',
         'asset',
         'paid_at',
+        'expected_usdt_amount',
     ];
 
     protected $casts = [
-        'total_amount' => 'decimal:2', 
+        'total_amount' => 'decimal:6', 
         'global_discount' => 'integer',
         'state' => OrderState::class,
         'paid_at' => 'datetime',
+        'expected_usdt_amount' => 'decimal:6'
     ];
 
     public function user(): BelongsTo
@@ -40,12 +43,19 @@ class Order extends Model
         return $this->hasMany(OrderDetail::class);
     }
 
-    public function markAsPaid(int $binanceTimestampMs = null): void
+    public function markAsPaid(?int $binanceTimestampMs = null): void
     {
         $this->state = OrderState::Pending;
-        $this->paid_at = $binanceTimestampMs ? now()->setTimestampMs($binanceTimestampMs) : now();
+
+        if ($binanceTimestampMs) {
+            $seconds = (int) floor($binanceTimestampMs / 1000);
+            $this->paid_at = Carbon::createFromTimestamp($seconds);
+        } else {
+            $this->paid_at = now();
+        }
 
         $this->save();
     }
+
 
 }
