@@ -35,4 +35,9 @@ return [
         ],
     ],
 
+    'libelula' => [
+        'api_url' => env('LIBELULA_API_URL', 'https://api.libelula.bo'),
+        'appkey'  => env('LIBELULA_APPKEY'),
+    ],
+
 ];

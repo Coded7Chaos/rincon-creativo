@@ -9,6 +9,20 @@ use App\Http\Controllers\TestController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ProfileController;
+use App\Http\Controllers\Api\LibelulaController;
+
+
+// Libelula Payment Routes
+Route::middleware('auth:sanctum')->group(function () {
+  Route::post('/pago/registrar', [LibelulaController::class, 'registrarDeuda']);
+});
+
+Route::match(['get','post'], '/webhook/libelula-pago', [LibelulaController::class, 'handlePagoExitoso'])
+  ->middleware('throttle:30,1') // 30 req/min
+  ->name('webhook.libelula.exitoso');
+
+Route::get('/libelula/conciliar', [LibelulaController::class, 'conciliar']) // protege con token en prod
+  ->middleware(['auth:sanctum','throttle:10,1']);
 
 
 Route::apiResource('categories', CategoryController::class);
